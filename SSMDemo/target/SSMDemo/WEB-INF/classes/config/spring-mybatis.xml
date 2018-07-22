@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/aop
+                           http://www.springframework.org/schema/aop/spring-aop.xsd
+                           http://www.springframework.org/schema/tx
+                           http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!--加载配置文件-->
+    <context:property-placeholder location="classpath:config/jdbc.properties" ignore-unresolvable="true"/>
+    <!--邮件配置-->
+    <context:property-placeholder location="classpath:config/mail.properties" ignore-unresolvable="true"/>
+    <!--配置数据源-->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.user}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+    <!--配置邮件接口-->
+    <bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="host" value="${mail.smtp.host}"/>
+        <property name="username" value="${mail.smtp.username}"/>
+        <property name="password" value="${mail.smtp.password}"/>
+        <property name="defaultEncoding" value="${mail.smtp.defaultEncoding}"/>
+        <property name="javaMailProperties">
+            <props>
+                <prop key="mail.smtp.auth">${mail.smtp.auth}</prop>
+                <prop key="mail.smtp.timeout">${mail.smtp.timeout}</prop>
+            </props>
+        </property>
+    </bean>
+    <!--spring和mybatis整合-->
+    <bean id="SqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="typeAliasesPackage" value="com.**.model"/>
+        <property name="mapperLocations" value="classpath*:mapper/**/**Mapper.xml"/>
+    </bean>
+    <!--扫描mapper接口包-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.**.mapper"/>
+        <property name="sqlSessionFactoryBeanName" >
+            <idref bean="SqlSessionFactory"/>
+        </property>
+    </bean>
+    <!--配置AOP注解-->
+    <!--<aop:aspectj-autoproxy proxy-target-class="true" />-->
+
+    <!--service实现类扫描-->
+    <context:component-scan base-package="com.**.service"/>
+    <!--aop层扫描(暂时不用)-->
+    <!--<context:component-scan base-package="com.**.aop">-->
+        <!--<context:include-filter type="annotation" expression="org.springframework.stereotype.Component"/>-->
+    <!--</context:component-scan>-->
+
+    <!--事务管理-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!--aop全局事务管理(下面基于controller层)-->
+    <aop:config>
+        <aop:pointcut id="allControllerMethods"
+                      expression="execution(* com..controller..Borrow*(..))"/>
+        <aop:advisor advice-ref="defaultTransactionAdvice"
+                     pointcut-ref="allControllerMethods"/>
+    </aop:config>
+    <tx:advice id="defaultTransactionAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <!-- 以方法为单位,指定方法应用什么事务属性 isolation:隔离级别 propagation:传播行为 read-only:是否只读 -->
+            <!--PROPAGATION_REQUIRED：支持当前事务，如果当前没有事务，就新建一个事务。这是最常见的选择。-->
+            <!--PROPAGATION_SUPPORTS：支持当前事务，如果当前没有事务，就以非事务方式执行。-->
+            <!--PROPAGATION_MANDATORY：支持当前事务，如果当前没有事务，就抛出异常。-->
+            <!--PROPAGATION_REQUIRES_NEW：新建事务，如果当前存在事务，把当前事务挂起。-->
+            <!--PROPAGATION_NOT_SUPPORTED：以非事务方式执行操作，如果当前存在事务，就把当前事务挂起。-->
+            <!--PROPAGATION_NEVER：以非事务方式执行，如果当前存在事务，则抛出异常。-->
+            <!--PROPAGATION_NESTED：支持当前事务，如果当前事务存在，则执行一个嵌套事务，如果当前没有事务，就新建一个事务。-->
+            <tx:method name="save*" propagation="REQUIRED" rollback-for="java.lang.RuntimeException"/>
+            <tx:method name="Borrow*" propagation="REQUIRED" rollback-for="java.lang.RuntimeException"/>
+            <tx:method name="add*" propagation="REQUIRED" rollback-for="java.lang.RuntimeException"/>
+            <tx:method name="update*" propagation="REQUIRED" rollback-for="java.lang.RuntimeException"/>
+            <tx:method name="del*" propagation="REQUIRED" rollback-for="java.lang.RuntimeException"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="false"/>
+</beans>

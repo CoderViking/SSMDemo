@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: javax:javaee-api:8.0">
+    <CLASSES>
+      <root url="jar://E:/SoftwareInstallation/maven_repo/javax/javaee-api/8.0/javaee-api-8.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://E:/SoftwareInstallation/maven_repo/javax/javaee-api/8.0/javaee-api-8.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://E:/SoftwareInstallation/maven_repo/javax/javaee-api/8.0/javaee-api-8.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
